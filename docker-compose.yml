@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: queryguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: queryguard
+      POSTGRES_USER: queryguard_user
+      POSTGRES_PASSWORD: queryguard_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U queryguard_user -d queryguard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - queryguard-network
+
+  # QueryGuard Backend Application
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: queryguard-backend
+    restart: unless-stopped
+    environment:
+      # Database Configuration
+      DATABASE_URL: ${DATABASE_URL}
+      
+      # Authentication
+      SECRET_KEY: your-super-secret-key-change-in-production
+      
+      # Vector Store Configuration
+      VECTOR_STORE_DIR: /app/chroma_collection_setup
+      LINEAGE_CSV_PATH: /app/temp_lineage_data/lineage_output_deep.csv
+      
+      # Google API (Optional - add your key if using vector embeddings)
+      # GOOGLE_API_KEY: your-google-api-key
+      
+      # GitHub App Configuration (Optional - add if using GitHub integration)
+      # GITHUB_WEBHOOK_SECRET: your-github-webhook-secret
+      
+      # Snowflake Configuration (Optional - add if using lineage builder)
+      # SNOWFLAKE_USER: your-snowflake-username
+      # SNOWFLAKE_ACCOUNT: your-snowflake-account
+      # SNOWFLAKE_WAREHOUSE: your-warehouse
+      # SNOWFLAKE_ROLE: your-role
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./temp_lineage_data:/app/temp_lineage_data
+      - chroma_data:/app/chroma_collection_setup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1.0/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - queryguard-network
+
+volumes:
+  postgres_data:
+    driver: local
+  chroma_data:
+    driver: local
+
+networks:
+  queryguard-network:
+    driver: bridge

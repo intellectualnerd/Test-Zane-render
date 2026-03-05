@@ -1,0 +1,14 @@
+.env
+.venv
+app/__pycache__
+app/api/__pycache__
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+chroma_collection_setup/
+app/services/lineage_builder/test.ipynb
+lineage.log
+column_lineage.csv
+test-data-catalog/

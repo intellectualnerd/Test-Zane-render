@@ -1,0 +1,3587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "QueryGuardAI Backend",
+    "description": "Backend API for QueryGuardAI - Data Lineage and Impact Analysis Tool",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Signup",
+        "description": "Public signup endpoint - creates users with MEMBER role only.\nFor creating users with other roles, use /users endpoint (requires authentication and appropriate role).\norg_id should be provided as a query parameter in the signup link.",
+        "operationId": "signup_auth_signup_post",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserSignup" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLogin" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Forgot Password",
+        "operationId": "forgot_password_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ForgotPassword" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset Password",
+        "operationId": "reset_password_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResetPassword" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout",
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Change Password",
+        "description": "Change password for authenticated user.\nRequires current password verification and sets new password.",
+        "operationId": "change_password_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangePassword" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Me",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__api__auth__UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/organizations/": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "List Organizations",
+        "description": "List all organizations (PRODUCT_SUPPORT_ADMIN only)",
+        "operationId": "list_organizations_organizations__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrganizationResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Organizations Organizations  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "post": {
+        "tags": ["Organizations"],
+        "summary": "Create Organization",
+        "description": "Create a new organization with first SYSTEM_ADMIN user (PRODUCT_SUPPORT_ADMIN only).\nAutomatically creates the first user with SYSTEM_ADMIN role using the provided username and email.\nNo password is required - a password setup link will be sent via email.",
+        "operationId": "create_organization_organizations__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrganizationCreate" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/organizations/kpi": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get Organizations Kpi",
+        "description": "Get KPI data for all organizations with users and role counts.\nReturns all organizations with their respective users and KPI metadata.\n(PRODUCT_SUPPORT_ADMIN only)",
+        "operationId": "get_organizations_kpi_organizations_kpi_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/KPIMetadata" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/organizations/{org_id}": {
+      "get": {
+        "tags": ["Organizations"],
+        "summary": "Get Organization",
+        "description": "Get organization details by ID (PRODUCT_SUPPORT_ADMIN only)",
+        "operationId": "get_organization_organizations__org_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Organizations"],
+        "summary": "Update Organization",
+        "description": "Update organization details (PRODUCT_SUPPORT_ADMIN only)",
+        "operationId": "update_organization_organizations__org_id__put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrganizationUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Organizations"],
+        "summary": "Deactivate Organization",
+        "description": "Deactivate organization (PRODUCT_SUPPORT_ADMIN only) - Soft delete",
+        "operationId": "deactivate_organization_organizations__org_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create User",
+        "description": "Create a new user with role assignment.\nRequires: PRODUCT_SUPPORT_ADMIN, SYSTEM_ADMIN, or ORGANIZATION_ADMIN\norg_id should be provided as a query parameter in the link.",
+        "operationId": "create_user_users__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__api__users__UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Users"],
+        "summary": "List Users",
+        "description": "List users.\nPRODUCT_SUPPORT_ADMIN can list users from any organization.\nOthers can only list users from their own organization.",
+        "operationId": "list_users_users__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/app__api__users__UserResponse"
+                  },
+                  "title": "Response List Users Users  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{user_id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get User",
+        "description": "Get user details by ID.\nPRODUCT_SUPPORT_ADMIN can access any user.\nOthers can only access users from their own organization.",
+        "operationId": "get_user_users__user_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__api__users__UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update User",
+        "description": "Update user details.\nPRODUCT_SUPPORT_ADMIN can update any user.\nOthers can only update users from their own organization.\nRole changes are validated based on assigner's permissions.",
+        "operationId": "update_user_users__user_id__put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateUserRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__api__users__UserResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Deactivate User",
+        "description": "Deactivate user (soft delete).\nPRODUCT_SUPPORT_ADMIN can deactivate any user.\nOthers can only deactivate users from their own organization.",
+        "operationId": "deactivate_user_users__user_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "User Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/test-connection": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Snowflake Test Connection",
+        "description": "Test Snowflake connection before saving",
+        "operationId": "snowflake_test_connection_snowflake_test_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SnowflakeConn" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/snowflake/save-connection": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Save Connection",
+        "description": "Save Snowflake connection after successful test",
+        "operationId": "save_connection_snowflake_save_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SnowflakeConn" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ConnectionResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/snowflake/connections": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "List Connections",
+        "description": "List all Snowflake connections for the organization",
+        "operationId": "list_connections_snowflake_connections_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Connections Snowflake Connections Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/snowflake/connections/{connection_id}": {
+      "delete": {
+        "tags": ["Snowflake"],
+        "summary": "Deactivate Connection",
+        "description": "Deactivate a Snowflake connection (soft delete)",
+        "operationId": "deactivate_connection_snowflake_connections__connection_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/fetch-databases/{connection_id}": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "Fetch Databases",
+        "description": "Fetch all databases from Snowflake connection",
+        "operationId": "fetch_databases_snowflake_fetch_databases__connection_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/fetch-schemas/{connection_id}/{database_name}": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "Fetch Schemas",
+        "description": "Fetch schemas for a specific database",
+        "operationId": "fetch_schemas_snowflake_fetch_schemas__connection_id___database_name__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          },
+          {
+            "name": "database_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Database Name" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/save-database-selection": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Save Database Selection",
+        "description": "Save database selections for a connection",
+        "operationId": "save_database_selection_snowflake_save_database_selection_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DatabaseSelection" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/save-schema-selection": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Save Schema Selection",
+        "description": "Save schema selections for a specific database",
+        "operationId": "save_schema_selection_snowflake_save_schema_selection_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SchemaSelection" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/selected-databases/{connection_id}": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "Get Selected Databases",
+        "description": "Get selected databases for a connection",
+        "operationId": "get_selected_databases_snowflake_selected_databases__connection_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DatabaseResponse" },
+                  "title": "Response Get Selected Databases Snowflake Selected Databases  Connection Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/selected-schemas/{connection_id}/{database_name}": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "Get Selected Schemas",
+        "description": "Get selected schemas for a specific database",
+        "operationId": "get_selected_schemas_snowflake_selected_schemas__connection_id___database_name__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          },
+          {
+            "name": "database_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Database Name" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SchemaResponse" },
+                  "title": "Response Get Selected Schemas Snowflake Selected Schemas  Connection Id   Database Name  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/database-schema-structure/{connection_id}": {
+      "get": {
+        "tags": ["Snowflake"],
+        "summary": "Fetch Database Schema Structure",
+        "description": "Fetch all databases with their schemas in hierarchical format",
+        "operationId": "fetch_database_schema_structure_snowflake_database_schema_structure__connection_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/DatabaseNode" },
+                  "title": "Response Fetch Database Schema Structure Snowflake Database Schema Structure  Connection Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/save-database-schema-selections": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Save Database Schema Selections",
+        "description": "Save database and schema selections from UI structure with flexible selection options",
+        "operationId": "save_database_schema_selections_snowflake_save_database_schema_selections_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatabaseSchemaSelectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snowflake/demo-auto-setup/{connection_id}": {
+      "post": {
+        "tags": ["Snowflake"],
+        "summary": "Demo Auto Setup",
+        "description": "Demo helper: given a connection_id, automatically\n- fetches and stores all databases\n- fetches and stores schemas for each database\n- marks all databases and schemas as selected\n\nThis is intended to speed up demos by skipping manual multi-step setup.",
+        "operationId": "demo_auto_setup_snowflake_demo_auto_setup__connection_id__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/install": {
+      "get": {
+        "tags": ["GitHub"],
+        "summary": "Github Install",
+        "description": "Redirect to GitHub App installation with org_id as state",
+        "operationId": "github_install_github_install_get",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/callback": {
+      "get": {
+        "tags": ["GitHub"],
+        "summary": "Github Callback",
+        "description": "Handle GitHub App installation callback",
+        "operationId": "github_callback_github_callback_get",
+        "parameters": [
+          {
+            "name": "installation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Installation Id"
+            }
+          },
+          {
+            "name": "setup_action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Setup Action"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "State"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/installations": {
+      "get": {
+        "tags": ["GitHub"],
+        "summary": "List Installations",
+        "description": "List all GitHub installations for the organization",
+        "operationId": "list_installations_github_installations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InstallationResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Installations Github Installations Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/github/repositories/{installation_id}": {
+      "get": {
+        "tags": ["GitHub"],
+        "summary": "List Repositories",
+        "description": "List repositories for a specific installation",
+        "operationId": "list_repositories_github_repositories__installation_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "installation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Installation Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RepositoryResponse"
+                  },
+                  "title": "Response List Repositories Github Repositories  Installation Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/sync-repositories/{installation_id}": {
+      "post": {
+        "tags": ["GitHub"],
+        "summary": "Sync Repositories",
+        "description": "Sync repositories for an installation (manual trigger)",
+        "operationId": "sync_repositories_github_sync_repositories__installation_id__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "installation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Installation Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/installations/{installation_id}": {
+      "delete": {
+        "tags": ["GitHub"],
+        "summary": "Deactivate Installation",
+        "description": "Deactivate a GitHub installation (soft delete)",
+        "operationId": "deactivate_installation_github_installations__installation_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "installation_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Installation Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github/webhook": {
+      "post": {
+        "tags": ["GitHub"],
+        "summary": "Github Webhook",
+        "description": "Handle GitHub webhook events (PR events)",
+        "operationId": "github_webhook_github_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/github/process-pr": {
+      "post": {
+        "tags": ["GitHub"],
+        "summary": "Process Pr Changes",
+        "description": "Process PR changes and add comment to PR",
+        "operationId": "process_pr_changes_github_process_pr_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PRProcessRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/github/analyses/{analysis_id}": {
+      "get": {
+        "tags": ["GitHub"],
+        "summary": "Get Pr Analysis",
+        "description": "Fetch stored PR analysis by its UUID with enhanced lineage data",
+        "operationId": "get_pr_analysis_github_analyses__analysis_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Analysis Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PRAAnalysisResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jira/test-connection": {
+      "post": {
+        "tags": ["Jira"],
+        "summary": "Test Connection",
+        "description": "Test Jira connection before saving",
+        "operationId": "test_connection_jira_test_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JiraConnectionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/jira/save-connection": {
+      "post": {
+        "tags": ["Jira"],
+        "summary": "Save Connection",
+        "description": "Save Jira connection after successful test",
+        "operationId": "save_connection_jira_save_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/JiraConnectionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JiraConnectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/jira/connections": {
+      "get": {
+        "tags": ["Jira"],
+        "summary": "List Connections",
+        "description": "List all Jira connections for the organization",
+        "operationId": "list_connections_jira_connections_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/JiraConnectionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Connections Jira Connections Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/jira/projects/{connection_id}": {
+      "get": {
+        "tags": ["Jira"],
+        "summary": "Get Projects",
+        "description": "Get available projects for a Jira connection",
+        "operationId": "get_projects_jira_projects__connection_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ProjectResponse" },
+                  "title": "Response Get Projects Jira Projects  Connection Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jira/issue-types/{connection_id}/{project_key}": {
+      "get": {
+        "tags": ["Jira"],
+        "summary": "Get Issue Types",
+        "description": "Get available issue types for a project",
+        "operationId": "get_issue_types_jira_issue_types__connection_id___project_key__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          },
+          {
+            "name": "project_key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Project Key" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/IssueTypeResponse" },
+                  "title": "Response Get Issue Types Jira Issue Types  Connection Id   Project Key  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jira/create-ticket": {
+      "post": {
+        "tags": ["Jira"],
+        "summary": "Create Ticket",
+        "description": "Create a Jira ticket",
+        "operationId": "create_ticket_jira_create_ticket_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTicketRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TicketResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/jira/tickets": {
+      "get": {
+        "tags": ["Jira"],
+        "summary": "List Tickets",
+        "description": "List all Jira tickets for the organization",
+        "operationId": "list_tickets_jira_tickets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/TicketResponse" },
+                  "type": "array",
+                  "title": "Response List Tickets Jira Tickets Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/jira/connections/{connection_id}": {
+      "delete": {
+        "tags": ["Jira"],
+        "summary": "Deactivate Connection",
+        "description": "Deactivate a Jira connection (soft delete)",
+        "operationId": "deactivate_connection_jira_connections__connection_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simulate/schema_change_impact": {
+      "post": {
+        "tags": ["Impact Simulation"],
+        "summary": "Simulate Schema Impact",
+        "operationId": "simulate_schema_impact_simulate_schema_change_impact_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ImpactRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/simulate/dbt_model_change_impact": {
+      "post": {
+        "tags": ["Impact Simulation"],
+        "summary": "Simulate Dbt Model Impact",
+        "operationId": "simulate_dbt_model_impact_simulate_dbt_model_change_impact_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ImpactRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/dbt-cloud/test-connection": {
+      "post": {
+        "tags": ["dbt Cloud"],
+        "summary": "Test Connection",
+        "operationId": "test_connection_dbt_cloud_test_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DbtCloudConnRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/dbt-cloud/save-connection": {
+      "post": {
+        "tags": ["dbt Cloud"],
+        "summary": "Save Connection",
+        "operationId": "save_connection_dbt_cloud_save_connection_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DbtCloudConnRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DbtCloudConnectionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/dbt-cloud/connections": {
+      "get": {
+        "tags": ["dbt Cloud"],
+        "summary": "List Connections",
+        "operationId": "list_connections_dbt_cloud_connections_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DbtCloudConnectionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Connections Dbt Cloud Connections Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/dbt-cloud/schedule/{connection_id}": {
+      "post": {
+        "tags": ["dbt Cloud"],
+        "summary": "Set Schedule",
+        "operationId": "set_schedule_dbt_cloud_schedule__connection_id__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DbtScheduleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dbt-cloud/sync/{connection_id}": {
+      "post": {
+        "tags": ["dbt Cloud"],
+        "summary": "Sync",
+        "operationId": "sync_dbt_cloud_sync__connection_id__post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Connection Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/query": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Chat With Llm",
+        "description": "Chat with LLM using vector database context for a specific organization.\nOptionally saves chat history if thread_id is provided.\n\nArgs:\n    request: ChatRequest containing message and optional parameters\n    thread_id: Optional thread ID for saving chat history (query parameter)\n    current_user: Authenticated user (from token)\n    db: Database session\n    \nReturns:\n    ChatResponse with LLM response and source documents",
+        "operationId": "chat_with_llm_chat_query_post",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Thread Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChatRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/threads": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Get User Chat Threads",
+        "description": "Get all chat threads for the authenticated user.\nReturns threads ordered by last_message_at (most recent first).",
+        "operationId": "get_user_chat_threads_chat_threads_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatThreadResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Get User Chat Threads Chat Threads Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      },
+      "post": {
+        "tags": ["chat"],
+        "summary": "Create Chat Thread",
+        "description": "Create a new chat thread for the authenticated user.\n\nReturns:\n    ChatThreadResponse with thread details",
+        "operationId": "create_chat_thread_chat_threads_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatThreadCreate",
+                "default": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatThreadResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/chat/threads/{thread_id}": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Get Chat Thread",
+        "description": "Get a specific chat thread with all its messages.",
+        "operationId": "get_chat_thread_chat_threads__thread_id__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Thread Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThreadWithMessages"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["chat"],
+        "summary": "Delete Chat Thread",
+        "description": "Soft delete a chat thread (sets is_active to False).",
+        "operationId": "delete_chat_thread_chat_threads__thread_id__delete",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Thread Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/threads/{thread_id}/title": {
+      "put": {
+        "tags": ["chat"],
+        "summary": "Update Thread Title",
+        "description": "Update the title of a chat thread.",
+        "operationId": "update_thread_title_chat_threads__thread_id__title_put",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Thread Id" }
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Title" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/conversation": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Create Conversation",
+        "description": "Create a new conversation for an organization.\nDEPRECATED: Use /threads endpoint instead.\n\nArgs:\n    org_id: Organization ID\n    \nReturns:\n    ChatConversation object",
+        "operationId": "create_conversation_chat_conversation_post",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatConversation" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/health": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Chat Health",
+        "description": "Health check for chat service.\n\nReturns:\n    Status of chat service",
+        "operationId": "chat_health_chat_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/chat/orgs/{org_id}/test": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Test Org Vector Store",
+        "description": "Test if vector store is available for an organization.\n\nArgs:\n    org_id: Organization ID\n    \nReturns:\n    Test result",
+        "operationId": "test_org_vector_store_chat_orgs__org_id__test_get",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/sessions/{org_id}": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Get Active Chat Sessions",
+        "description": "Get all active chat sessions for an organization.\n\nArgs:\n    org_id: Organization ID\n    \nReturns:\n    List of active chat sessions",
+        "operationId": "get_active_chat_sessions_chat_sessions__org_id__get",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Org Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ChatSessionInfo" },
+                  "title": "Response Get Active Chat Sessions Chat Sessions  Org Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/stats": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Get Chat Statistics",
+        "description": "Get WebSocket connection statistics.\n\nReturns:\n    Chat statistics",
+        "operationId": "get_chat_statistics_chat_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ChatStatsResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/cleanup": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Cleanup Inactive Sessions",
+        "description": "Manually trigger cleanup of inactive sessions.\n\nArgs:\n    timeout_minutes: Minutes of inactivity before cleanup\n    \nReturns:\n    Cleanup result",
+        "operationId": "cleanup_inactive_sessions_chat_cleanup_post",
+        "parameters": [
+          {
+            "name": "timeout_minutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "title": "Timeout Minutes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/test-page": {
+      "get": {
+        "tags": ["chat"],
+        "summary": "Get Websocket Test Page",
+        "description": "Serve a simple test page for WebSocket functionality.",
+        "operationId": "get_websocket_test_page_chat_test_page_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/overview-dashboard/": {
+      "get": {
+        "tags": ["Overview Dashboard"],
+        "summary": "Get Dashboard Overview",
+        "description": "Get dashboard overview data with KPIs and pull request information.\nAccessible by any authenticated user (any role).",
+        "operationId": "get_dashboard_overview_overview_dashboard__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverviewResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/init-setup/": {
+      "post": {
+        "tags": ["Initialization"],
+        "summary": "Initialize System Endpoint",
+        "description": "TEMPORARY ENDPOINT: Initialize QueryGuardAI system.\n\nCreates:\n1. QueryGuardAI organization (if it doesn't exist)\n2. First PRODUCT_SUPPORT_ADMIN user with hardcoded credentials\n\n⚠️  WARNING: This endpoint should be removed or protected after initial setup!\n⚠️  Default credentials: admin / admin@queryguardai.com / Admin@123\n\nThis is a one-time setup endpoint. It will not create duplicate organizations or users.",
+        "operationId": "initialize_system_endpoint_init_setup__post",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InitResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/worker-status": {
+      "get": {
+        "summary": "Worker Status",
+        "description": "Check the status of the background Snowflake crawler worker",
+        "operationId": "worker_status_worker_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChangePassword": {
+        "properties": {
+          "current_password": { "type": "string", "title": "Current Password" },
+          "new_password": { "type": "string", "title": "New Password" }
+        },
+        "type": "object",
+        "required": ["current_password", "new_password"],
+        "title": "ChangePassword"
+      },
+      "ChatConversation": {
+        "properties": {
+          "conversation_id": { "type": "string", "title": "Conversation Id" },
+          "org_id": { "type": "string", "title": "Org Id" },
+          "messages": {
+            "items": { "$ref": "#/components/schemas/ChatMessageData" },
+            "type": "array",
+            "title": "Messages"
+          },
+          "created_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["conversation_id", "org_id", "messages"],
+        "title": "ChatConversation"
+      },
+      "ChatMessageData": {
+        "properties": {
+          "role": { "type": "string", "title": "Role" },
+          "content": { "type": "string", "title": "Content" },
+          "timestamp": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": ["role", "content"],
+        "title": "ChatMessageData"
+      },
+      "ChatMessageResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "thread_id": { "type": "string", "title": "Thread Id" },
+          "role": { "type": "string", "title": "Role" },
+          "content": { "type": "string", "title": "Content" },
+          "metadata": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Metadata"
+          },
+          "created_at": { "type": "string", "title": "Created At" }
+        },
+        "type": "object",
+        "required": ["id", "thread_id", "role", "content", "created_at"],
+        "title": "ChatMessageResponse"
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": { "type": "string", "title": "Message" },
+          "k": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "K",
+            "default": 5
+          },
+          "conversation_history": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/ChatMessageData" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Conversation History",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["message"],
+        "title": "ChatRequest"
+      },
+      "ChatResponse": {
+        "properties": {
+          "response": { "type": "string", "title": "Response" },
+          "sources": {
+            "items": { "additionalProperties": true, "type": "object" },
+            "type": "array",
+            "title": "Sources"
+          },
+          "conversation_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Conversation Id"
+          },
+          "impacted_query_ids": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Impacted Query Ids",
+            "default": []
+          },
+          "impacted_queries": {
+            "anyOf": [
+              {
+                "items": { "additionalProperties": true, "type": "object" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Impacted Queries",
+            "default": []
+          },
+          "pr_repo_data": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Pr Repo Data"
+          },
+          "code_suggestions": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Code Suggestions"
+          },
+          "jira_ticket": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Jira Ticket"
+          }
+        },
+        "type": "object",
+        "required": ["response", "sources"],
+        "title": "ChatResponse"
+      },
+      "ChatSessionInfo": {
+        "properties": {
+          "session_id": { "type": "string", "title": "Session Id" },
+          "org_id": { "type": "string", "title": "Org Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "user_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "User Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UserStatus",
+            "default": "online"
+          },
+          "created_at": { "type": "string", "title": "Created At" },
+          "last_activity": { "type": "string", "title": "Last Activity" },
+          "connection_count": {
+            "type": "integer",
+            "title": "Connection Count",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "org_id",
+          "user_id",
+          "created_at",
+          "last_activity"
+        ],
+        "title": "ChatSessionInfo",
+        "description": "Model for chat session information"
+      },
+      "ChatStatsResponse": {
+        "properties": {
+          "active_connections": {
+            "type": "integer",
+            "title": "Active Connections"
+          },
+          "active_sessions": { "type": "integer", "title": "Active Sessions" },
+          "organizations_with_sessions": {
+            "type": "integer",
+            "title": "Organizations With Sessions"
+          },
+          "users_with_sessions": {
+            "type": "integer",
+            "title": "Users With Sessions"
+          },
+          "total_org_sessions": {
+            "type": "integer",
+            "title": "Total Org Sessions"
+          },
+          "total_user_sessions": {
+            "type": "integer",
+            "title": "Total User Sessions"
+          },
+          "server_uptime": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Server Uptime"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_connections",
+          "active_sessions",
+          "organizations_with_sessions",
+          "users_with_sessions",
+          "total_org_sessions",
+          "total_user_sessions"
+        ],
+        "title": "ChatStatsResponse",
+        "description": "Model for chat statistics response"
+      },
+      "ChatThreadCreate": {
+        "properties": {
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "title": "ChatThreadCreate"
+      },
+      "ChatThreadResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "org_id": { "type": "string", "title": "Org Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": { "type": "string", "title": "Created At" },
+          "updated_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Updated At"
+          },
+          "last_message_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Last Message At"
+          },
+          "message_count": {
+            "type": "integer",
+            "title": "Message Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "user_id",
+          "title",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "last_message_at"
+        ],
+        "title": "ChatThreadResponse"
+      },
+      "ChatThreadWithMessages": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "org_id": { "type": "string", "title": "Org Id" },
+          "user_id": { "type": "string", "title": "User Id" },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": { "type": "string", "title": "Created At" },
+          "updated_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Updated At"
+          },
+          "last_message_at": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Last Message At"
+          },
+          "messages": {
+            "items": { "$ref": "#/components/schemas/ChatMessageResponse" },
+            "type": "array",
+            "title": "Messages",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "user_id",
+          "title",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "last_message_at"
+        ],
+        "title": "ChatThreadWithMessages"
+      },
+      "ConnectionResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "account": { "type": "string", "title": "Account" },
+          "username": { "type": "string", "title": "Username" },
+          "warehouse": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warehouse"
+          },
+          "cron_expression": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cron Expression"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "connection_name",
+          "account",
+          "username",
+          "warehouse",
+          "cron_expression",
+          "is_active",
+          "created_at"
+        ],
+        "title": "ConnectionResponse"
+      },
+      "CreateTicketRequest": {
+        "properties": {
+          "connection_id": { "type": "string", "title": "Connection Id" },
+          "summary": { "type": "string", "title": "Summary" },
+          "description": { "type": "string", "title": "Description" },
+          "issue_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Issue Type"
+          },
+          "priority": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Priority"
+          },
+          "assignee": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Assignee"
+          },
+          "pr_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Url"
+          },
+          "analysis_report_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Analysis Report Url"
+          }
+        },
+        "type": "object",
+        "required": ["connection_id", "summary", "description"],
+        "title": "CreateTicketRequest"
+      },
+      "CreateUserRequest": {
+        "properties": {
+          "username": { "type": "string", "title": "Username" },
+          "password": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Password"
+          },
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "role": { "type": "string", "title": "Role", "default": "MEMBER" }
+        },
+        "type": "object",
+        "required": ["username", "email"],
+        "title": "CreateUserRequest"
+      },
+      "DashboardOverviewResponse": {
+        "properties": {
+          "summary": { "$ref": "#/components/schemas/DashboardSummary" },
+          "pull_requests": {
+            "items": { "$ref": "#/components/schemas/PullRequestSummary" },
+            "type": "array",
+            "title": "Pull Requests"
+          }
+        },
+        "type": "object",
+        "required": ["summary", "pull_requests"],
+        "title": "DashboardOverviewResponse"
+      },
+      "DashboardSummary": {
+        "properties": {
+          "total_prs": { "type": "integer", "title": "Total Prs" },
+          "impacted_queries": { "type": "integer", "title": "Impacted Queries" }
+        },
+        "type": "object",
+        "required": ["total_prs", "impacted_queries"],
+        "title": "DashboardSummary"
+      },
+      "DatabaseNode": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "database_name": { "type": "string", "title": "Database Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "schemas": {
+            "items": { "$ref": "#/components/schemas/SchemaNode" },
+            "type": "array",
+            "title": "Schemas",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": ["id", "database_name", "is_selected", "created_at"],
+        "title": "DatabaseNode"
+      },
+      "DatabaseResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "database_name": { "type": "string", "title": "Database Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "database_name", "is_selected", "created_at"],
+        "title": "DatabaseResponse"
+      },
+      "DatabaseSchemaSelectionRequest": {
+        "properties": {
+          "databases": {
+            "items": { "$ref": "#/components/schemas/DatabaseSelectionItem" },
+            "type": "array",
+            "title": "Databases"
+          }
+        },
+        "type": "object",
+        "required": ["databases"],
+        "title": "DatabaseSchemaSelectionRequest"
+      },
+      "DatabaseSelection": {
+        "properties": {
+          "database_names": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Database Names"
+          }
+        },
+        "type": "object",
+        "required": ["database_names"],
+        "title": "DatabaseSelection"
+      },
+      "DatabaseSelectionItem": {
+        "properties": {
+          "database_name": { "type": "string", "title": "Database Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" },
+          "schemas": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/SchemaSelectionItem" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Schemas"
+          }
+        },
+        "type": "object",
+        "required": ["database_name", "is_selected"],
+        "title": "DatabaseSelectionItem"
+      },
+      "DbtCloudConnRequest": {
+        "properties": {
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "api_key": { "type": "string", "title": "Api Key" },
+          "account_id": { "type": "string", "title": "Account Id" },
+          "base_url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Base Url"
+          }
+        },
+        "type": "object",
+        "required": ["connection_name", "api_key", "account_id", "base_url"],
+        "title": "DbtCloudConnRequest"
+      },
+      "DbtCloudConnectionResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "org_id": { "type": "string", "format": "uuid", "title": "Org Id" },
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "account_id": { "type": "string", "title": "Account Id" },
+          "base_url": { "type": "string", "title": "Base Url" },
+          "is_active": { "type": "boolean", "title": "Is Active" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "connection_name",
+          "account_id",
+          "base_url",
+          "is_active"
+        ],
+        "title": "DbtCloudConnectionResponse"
+      },
+      "DbtScheduleRequest": {
+        "properties": {
+          "cron_expression": { "type": "string", "title": "Cron Expression" }
+        },
+        "type": "object",
+        "required": ["cron_expression"],
+        "title": "DbtScheduleRequest"
+      },
+      "ForgotPassword": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["email"],
+        "title": "ForgotPassword"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ImpactRequest": {
+        "properties": {
+          "sql_change": { "type": "string", "title": "Sql Change" },
+          "file_path": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "File Path"
+          },
+          "max_iters": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Max Iters",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "required": ["sql_change"],
+        "title": "ImpactRequest"
+      },
+      "InitResponse": {
+        "properties": {
+          "message": { "type": "string", "title": "Message" },
+          "organization_id": { "type": "string", "title": "Organization Id" },
+          "user_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "User Id"
+          },
+          "username": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Username"
+          },
+          "email": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Email"
+          },
+          "role": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Role"
+          },
+          "warning": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warning"
+          }
+        },
+        "type": "object",
+        "required": ["message", "organization_id"],
+        "title": "InitResponse"
+      },
+      "InstallationResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "installation_id": { "type": "string", "title": "Installation Id" },
+          "account_type": { "type": "string", "title": "Account Type" },
+          "account_login": { "type": "string", "title": "Account Login" },
+          "repository_selection": {
+            "type": "string",
+            "title": "Repository Selection"
+          },
+          "permissions": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Permissions"
+          },
+          "events": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Events"
+          },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "installation_id",
+          "account_type",
+          "account_login",
+          "repository_selection",
+          "permissions",
+          "events",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "InstallationResponse"
+      },
+      "IssueTypeResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "description": { "type": "string", "title": "Description" }
+        },
+        "type": "object",
+        "required": ["id", "name", "description"],
+        "title": "IssueTypeResponse"
+      },
+      "JiraConnectionRequest": {
+        "properties": {
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "server_url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Server Url"
+          },
+          "username": { "type": "string", "title": "Username" },
+          "api_token": { "type": "string", "title": "Api Token" },
+          "project_key": { "type": "string", "title": "Project Key" },
+          "issue_type": {
+            "type": "string",
+            "title": "Issue Type",
+            "default": "Task"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connection_name",
+          "server_url",
+          "username",
+          "api_token",
+          "project_key"
+        ],
+        "title": "JiraConnectionRequest"
+      },
+      "JiraConnectionResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "server_url": { "type": "string", "title": "Server Url" },
+          "username": { "type": "string", "title": "Username" },
+          "project_key": { "type": "string", "title": "Project Key" },
+          "issue_type": { "type": "string", "title": "Issue Type" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "connection_name",
+          "server_url",
+          "username",
+          "project_key",
+          "issue_type",
+          "is_active",
+          "created_at"
+        ],
+        "title": "JiraConnectionResponse"
+      },
+      "KPIMetadata": {
+        "properties": {
+          "total_organizations": {
+            "type": "integer",
+            "title": "Total Organizations"
+          },
+          "total_users": { "type": "integer", "title": "Total Users" },
+          "organizations": {
+            "items": { "$ref": "#/components/schemas/OrganizationKPI" },
+            "type": "array",
+            "title": "Organizations"
+          }
+        },
+        "type": "object",
+        "required": ["total_organizations", "total_users", "organizations"],
+        "title": "KPIMetadata"
+      },
+      "LoginResponse": {
+        "properties": {
+          "access_token": { "type": "string", "title": "Access Token" },
+          "token_type": { "type": "string", "title": "Token Type" },
+          "is_connection_setup": {
+            "type": "boolean",
+            "title": "Is Connection Setup"
+          },
+          "missing_connectors": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Missing Connectors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "is_connection_setup",
+          "missing_connectors"
+        ],
+        "title": "LoginResponse"
+      },
+      "OrganizationCreate": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "username": { "type": "string", "title": "Username" },
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["name", "username", "email"],
+        "title": "OrganizationCreate"
+      },
+      "OrganizationKPI": {
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationResponse"
+          },
+          "users": {
+            "items": { "$ref": "#/components/schemas/UserKPIInfo" },
+            "type": "array",
+            "title": "Users"
+          },
+          "role_counts": { "$ref": "#/components/schemas/RoleCounts" }
+        },
+        "type": "object",
+        "required": ["organization", "users", "role_counts"],
+        "title": "OrganizationKPI"
+      },
+      "OrganizationResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": { "type": "string", "title": "Name" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "name", "is_active", "created_at"],
+        "title": "OrganizationResponse"
+      },
+      "OrganizationUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Name"
+          },
+          "is_active": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "OrganizationUpdate"
+      },
+      "PRAAnalysisResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "org_id": { "type": "string", "format": "uuid", "title": "Org Id" },
+          "installation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Installation Id"
+          },
+          "repository_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Repository Id"
+          },
+          "repo_full_name": { "type": "string", "title": "Repo Full Name" },
+          "pr_number": { "type": "integer", "title": "Pr Number" },
+          "pr_title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Title"
+          },
+          "pr_description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Description"
+          },
+          "branch_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Branch Name"
+          },
+          "author_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Author Name"
+          },
+          "pr_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Url"
+          },
+          "total_impacted_queries": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Total Impacted Queries"
+          },
+          "analysis_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Analysis Data"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "installation_id",
+          "repository_id",
+          "repo_full_name",
+          "pr_number",
+          "pr_title",
+          "pr_description",
+          "branch_name",
+          "author_name",
+          "pr_url",
+          "total_impacted_queries",
+          "analysis_data",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PRAAnalysisResponse"
+      },
+      "PRProcessRequest": {
+        "properties": {
+          "installation_id": { "type": "string", "title": "Installation Id" },
+          "repo_full_name": { "type": "string", "title": "Repo Full Name" },
+          "pr_number": { "type": "integer", "title": "Pr Number" },
+          "pr_title": { "type": "string", "title": "Pr Title" },
+          "pr_body": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "installation_id",
+          "repo_full_name",
+          "pr_number",
+          "pr_title"
+        ],
+        "title": "PRProcessRequest"
+      },
+      "ProjectResponse": {
+        "properties": {
+          "key": { "type": "string", "title": "Key" },
+          "name": { "type": "string", "title": "Name" },
+          "id": { "type": "string", "title": "Id" }
+        },
+        "type": "object",
+        "required": ["key", "name", "id"],
+        "title": "ProjectResponse"
+      },
+      "PullRequestSummary": {
+        "properties": {
+          "analysis_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Analysis Id"
+          },
+          "pr_id": { "type": "string", "title": "Pr Id" },
+          "title": { "type": "string", "title": "Title" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "default": ""
+          },
+          "branch_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Branch Name",
+            "default": ""
+          },
+          "repository_name": { "type": "string", "title": "Repository Name" },
+          "author_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Author Name",
+            "default": ""
+          },
+          "submitted_at": { "type": "string", "title": "Submitted At" },
+          "total_impacted_queries": {
+            "type": "integer",
+            "title": "Total Impacted Queries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "analysis_id",
+          "pr_id",
+          "title",
+          "repository_name",
+          "submitted_at",
+          "total_impacted_queries"
+        ],
+        "title": "PullRequestSummary"
+      },
+      "RepositoryResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "repo_id": { "type": "string", "title": "Repo Id" },
+          "repo_name": { "type": "string", "title": "Repo Name" },
+          "full_name": { "type": "string", "title": "Full Name" },
+          "private": { "type": "boolean", "title": "Private" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "default_branch": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Default Branch"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "repo_id",
+          "repo_name",
+          "full_name",
+          "private",
+          "description",
+          "default_branch",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RepositoryResponse"
+      },
+      "ResetPassword": {
+        "properties": {
+          "token": { "type": "string", "title": "Token" },
+          "new_password": { "type": "string", "title": "New Password" }
+        },
+        "type": "object",
+        "required": ["token", "new_password"],
+        "title": "ResetPassword"
+      },
+      "RoleCounts": {
+        "properties": {
+          "PRODUCT_SUPPORT_ADMIN": {
+            "type": "integer",
+            "title": "Product Support Admin",
+            "default": 0
+          },
+          "SYSTEM_ADMIN": {
+            "type": "integer",
+            "title": "System Admin",
+            "default": 0
+          },
+          "ORGANIZATION_ADMIN": {
+            "type": "integer",
+            "title": "Organization Admin",
+            "default": 0
+          },
+          "MEMBER": { "type": "integer", "title": "Member", "default": 0 },
+          "total": { "type": "integer", "title": "Total", "default": 0 }
+        },
+        "type": "object",
+        "title": "RoleCounts"
+      },
+      "SchemaNode": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "schema_name": { "type": "string", "title": "Schema Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "schema_name", "is_selected", "created_at"],
+        "title": "SchemaNode"
+      },
+      "SchemaResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "schema_name": { "type": "string", "title": "Schema Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "schema_name", "is_selected", "created_at"],
+        "title": "SchemaResponse"
+      },
+      "SchemaSelection": {
+        "properties": {
+          "database_name": { "type": "string", "title": "Database Name" },
+          "schema_names": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Schema Names"
+          }
+        },
+        "type": "object",
+        "required": ["database_name", "schema_names"],
+        "title": "SchemaSelection"
+      },
+      "SchemaSelectionItem": {
+        "properties": {
+          "schema_name": { "type": "string", "title": "Schema Name" },
+          "is_selected": { "type": "boolean", "title": "Is Selected" }
+        },
+        "type": "object",
+        "required": ["schema_name", "is_selected"],
+        "title": "SchemaSelectionItem"
+      },
+      "SnowflakeConn": {
+        "properties": {
+          "connection_name": { "type": "string", "title": "Connection Name" },
+          "account": { "type": "string", "title": "Account" },
+          "username": { "type": "string", "title": "Username" },
+          "password": { "type": "string", "title": "Password" },
+          "warehouse": { "type": "string", "title": "Warehouse" },
+          "role": { "type": "string", "title": "Role" },
+          "cron_expression": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Cron Expression"
+          }
+        },
+        "type": "object",
+        "required": ["connection_name", "account", "username", "password"],
+        "title": "SnowflakeConn"
+      },
+      "TicketResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "ticket_key": { "type": "string", "title": "Ticket Key" },
+          "ticket_url": { "type": "string", "title": "Ticket Url" },
+          "summary": { "type": "string", "title": "Summary" },
+          "description": { "type": "string", "title": "Description" },
+          "issue_type": { "type": "string", "title": "Issue Type" },
+          "status": { "type": "string", "title": "Status" },
+          "priority": { "type": "string", "title": "Priority" },
+          "assignee": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Assignee"
+          },
+          "pr_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Pr Url"
+          },
+          "analysis_report_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Analysis Report Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ticket_key",
+          "ticket_url",
+          "summary",
+          "description",
+          "issue_type",
+          "status",
+          "priority",
+          "created_at"
+        ],
+        "title": "TicketResponse"
+      },
+      "UpdateUserRequest": {
+        "properties": {
+          "username": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Username"
+          },
+          "email": {
+            "anyOf": [
+              { "type": "string", "format": "email" },
+              { "type": "null" }
+            ],
+            "title": "Email"
+          },
+          "role": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Role"
+          },
+          "is_active": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Is Active"
+          },
+          "password": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "title": "UpdateUserRequest"
+      },
+      "UserKPIInfo": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "username": { "type": "string", "title": "Username" },
+          "email": { "type": "string", "title": "Email" },
+          "role": { "type": "string", "title": "Role" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "email",
+          "role",
+          "is_active",
+          "created_at"
+        ],
+        "title": "UserKPIInfo"
+      },
+      "UserLogin": {
+        "properties": {
+          "username": { "type": "string", "title": "Username" },
+          "password": { "type": "string", "title": "Password" }
+        },
+        "type": "object",
+        "required": ["username", "password"],
+        "title": "UserLogin"
+      },
+      "UserSignup": {
+        "properties": {
+          "username": { "type": "string", "title": "Username" },
+          "password": { "type": "string", "title": "Password" },
+          "email": { "type": "string", "format": "email", "title": "Email" }
+        },
+        "type": "object",
+        "required": ["username", "password", "email"],
+        "title": "UserSignup"
+      },
+      "UserStatus": {
+        "type": "string",
+        "enum": ["online", "offline", "typing", "idle"],
+        "title": "UserStatus",
+        "description": "User online status"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      },
+      "app__api__auth__UserResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "username": { "type": "string", "title": "Username" },
+          "email": { "type": "string", "title": "Email" },
+          "org_id": { "type": "string", "format": "uuid", "title": "Org Id" },
+          "role": { "type": "string", "title": "Role" }
+        },
+        "type": "object",
+        "required": ["id", "username", "email", "org_id", "role"],
+        "title": "UserResponse"
+      },
+      "app__api__users__UserResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "username": { "type": "string", "title": "Username" },
+          "email": { "type": "string", "title": "Email" },
+          "org_id": { "type": "string", "format": "uuid", "title": "Org Id" },
+          "role": { "type": "string", "title": "Role" },
+          "is_active": { "type": "boolean", "title": "Is Active" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "email",
+          "org_id",
+          "role",
+          "is_active",
+          "created_at"
+        ],
+        "title": "UserResponse"
+      }
+    },
+    "securitySchemes": { "HTTPBearer": { "type": "http", "scheme": "bearer" } }
+  }
+}
