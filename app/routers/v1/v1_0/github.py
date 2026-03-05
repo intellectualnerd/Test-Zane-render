@@ -32,7 +32,7 @@ router = APIRouter(prefix="/github", tags=["GitHub"])
 
 # --- Configuration ---
 # TODO: Update these values for your GitHub App
-GITHUB_APP_URL = "https://github.com/apps/test-zane"
+GITHUB_APP_URL = "https://github.com/apps/test-zane/api/v1.0"
 CALLBACK_URL = "https://queryguard-backend-dev.onrender.com/github/callback"
 GITHUB_API_BASE = "https://api.github.com"
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
