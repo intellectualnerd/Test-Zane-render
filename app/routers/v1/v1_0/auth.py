@@ -5,7 +5,7 @@
 # POST /auth/change-password → change password (requires authentication)
 # POST /auth/logout → revoke JWT
 # GET /auth/me → get current user info
-
+# some change
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
