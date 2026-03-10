@@ -5,7 +5,6 @@
 # GET /github/repositories/{installation_id} → list repositories for installation
 # POST /github/webhook → handle GitHub webhook events (PR events)
 # POST /github/process-pr → process PR changes and add comment
-
 from fastapi import APIRouter, HTTPException, Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -498,7 +497,7 @@ def github_callback(
                 Organization.id == org_uuid,
                 Organization.is_active == True
             ).first()
-            
+
             if not organization:
                 logger.warning("/github/callback - organization not found for pending request: %s", org_uuid)
                 return {"message": "Organization not found", "status": "error"}
