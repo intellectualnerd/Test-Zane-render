@@ -27,6 +27,7 @@ from urllib.parse import unquote
 from app.services.impact_analysis import schema_detection_rag, dbt_model_detection_rag, fetch_queries, store_pr_analysis, parse_schema_change
 from github import GithubIntegration, Github
 from sqlalchemy import and_, or_, func
+import time
 
 router = APIRouter(prefix="/github", tags=["GitHub"])
 
@@ -814,226 +815,123 @@ def extract_added_lines_from_patch(patch: str) -> str:
     
     return '\n'.join(added_lines)
 
-
 @router.post("/webhook")
 async def github_webhook(request: Request, db=Depends(get_db)):
-    """Handle GitHub webhook events (PR events)"""
-    # Get the raw body for signature verification
+    start_total = time.time()
+
+    # --- Step 1: Read body ---
+    t0 = time.time()
     body = await request.body()
-    
-    # Get GitHub signature header
+    logger.info("Time: read body = %.4fs", time.time() - t0)
+
+    # --- Step 2: Signature verification ---
+    t0 = time.time()
     signature = request.headers.get("X-Hub-Signature-256")
     if not signature:
-        logger.warning("/github/webhook - missing signature header")
         raise HTTPException(status_code=401, detail="Missing signature")
-    
-    # Verify webhook signature
+
     if not verify_webhook_signature(body, signature):
-        logger.warning("/github/webhook - invalid signature")
         raise HTTPException(status_code=401, detail="Invalid signature")
-    
-    # Extract headers and parse payload early so we can log for any event
+
+    logger.info("Time: signature verification = %.4fs", time.time() - t0)
+
+    # --- Step 3: Parse payload ---
+    t0 = time.time()
+    payload = json.loads(body.decode())
+    logger.info("Time: payload parsing = %.4fs", time.time() - t0)
+
     event_type = request.headers.get("X-GitHub-Event")
     delivery_id = request.headers.get("X-GitHub-Delivery")
 
-    # Parse the webhook payload
-    try:
-        payload = json.loads(body.decode())
-    except json.JSONDecodeError:
-        logger.warning("/github/webhook - invalid JSON payload")
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
-
-    # Log compact info for observability
-    try:
-        payload_preview = str(payload)[:2000]
-        logger.info(
-            "/github/webhook - delivery=%s event=%s payload_preview=%s",
-            delivery_id,
-            event_type,
-            payload_preview,
-        )
-    except Exception:
-        logger.debug("/github/webhook - failed to log payload preview")
-
-    # If not interested in this event type, return early
     if event_type != "pull_request":
-        logger.info("/github/webhook - ignoring event %s", event_type)
         return {"message": f"Ignoring {event_type} event"}
-    
-    # Extract PR information
+
     action = payload.get("action")
     if action not in ["opened", "reopened", "synchronize"]:
-        logger.info("/github/webhook - ignoring PR action %s", action)
         return {"message": f"Ignoring PR {action} action"}
-    
-    pr_data = payload.get("pull_request", {})
-    repo_data = payload.get("repository", {})
-    installation_data = payload.get("installation", {})
-    
-    # Extract relevant information
-    pr_number = pr_data.get("number")
-    pr_title = pr_data.get("title")
-    pr_body = pr_data.get("body")
-    branch_name = pr_data.get("head", {}).get("ref")  # Branch name from PR head
-    author_name = pr_data.get("user", {}).get("login")  # PR author username
-    pr_url = pr_data.get("html_url")  # GitHub PR URL
-    repo_full_name = repo_data.get("full_name")
-    installation_id = str(installation_data.get("id"))
 
-    # Validate installation id exists and is active in our DB
-    if not installation_id:
-        logger.info("/github/webhook - missing installation id in payload")
-        return {"message": "Missing installation id"}
+    # --- Step 4: DB lookup ---
+    t0 = time.time()
+    installation_id = str(payload.get("installation", {}).get("id"))
 
     installation = db.query(GitHubInstallation).filter(
         GitHubInstallation.installation_id == installation_id,
         GitHubInstallation.is_active == True
     ).first()
 
+    logger.info("Time: DB lookup = %.4fs", time.time() - t0)
+
     if not installation:
-        logger.info("/github/webhook - installation id %s not registered/active, ignoring", installation_id)
-        return {"message": "Installation not recognized or inactive"}
-    
-    # Use GitHub App installation token and PyGithub to fetch files and post comment
-    if not git_integration:
-        logger.warning("/github/webhook - GitHub Integration not configured")
-        return {"message": "GitHub Integration not configured"}
+        return {"message": "Installation not recognized"}
 
-    try:
-        access_token = git_integration.get_access_token(int(installation_id)).token
-        gh = Github(login_or_token=access_token)
-        repo = gh.get_repo(repo_full_name)
-        pr = repo.get_pull(pr_number)
+    # --- Step 5: GitHub API calls ---
+    t0 = time.time()
+    access_token = git_integration.get_access_token(int(installation_id)).token
+    gh = Github(login_or_token=access_token)
+    repo = gh.get_repo(payload["repository"]["full_name"])
+    pr = repo.get_pull(payload["pull_request"]["number"])
+    logger.info("Time: GitHub API fetch PR = %.4fs", time.time() - t0)
 
-        # Collect relevant SQL file changes
-        code_changes = []
-        for file in pr.get_files():
-            if getattr(file, "patch", None) and file.filename.lower().endswith(".sql"):
-                code_changes.append(
-                    {
-                        "filename": file.filename,
-                        "status": file.status,
-                        "patch": file.patch,
-                        "additions": file.additions,
-                        "deletions": file.deletions,
-                    }
-                )
+    # --- Step 6: Collect files ---
+    t0 = time.time()
+    code_changes = []
+    for file in pr.get_files():
+        if getattr(file, "patch", None) and file.filename.lower().endswith(".sql"):
+            code_changes.append(file)
+    logger.info("Time: fetch & filter files = %.4fs", time.time() - t0)
 
-        if not code_changes:
-            logger.info("/github/webhook - no relevant SQL changes found")
-            return {"message": "No relevant SQL changes found"}
+    # --- Step 7: Analysis ---
+    t0 = time.time()
+    results = []
 
-        # Analyze each SQL change
-        results = []
-        for c in code_changes:
-            # Extract only the added lines (new content) from the patch
-            added_content = extract_added_lines_from_patch(c.get("patch", ""))
-            
-            # Create full_diff for logging/storage (includes full patch)
-            full_diff = (
-                f"File: {c['filename']} ({c['status']}) [+{c['additions']}/-{c['deletions']}]\n{c['patch']}"
+    for file in code_changes:
+        file_start = time.time()
+
+        added_content = extract_added_lines_from_patch(file.patch or "")
+
+        if not added_content.strip():
+            continue
+
+        analysis_input = f"File: {file.filename}\n{added_content}"
+
+        if "models/" in file.filename:
+            analysis_result = dbt_model_detection_rag(
+                analysis_input, file.filename, str(installation.org_id), db
             )
-            
-            # Skip analysis if there are no added lines (only deletions)
-            if not added_content.strip():
-                logger.info("/github/webhook - no added content in %s, skipping analysis", c['filename'])
-                results.append(
-                    {
-                        "sql_change": full_diff,
-                        "impact_analysis": "No new content to analyze (file contains only deletions).",
-                        "affected_query_ids": [],
-                        "regression_queries": [],
-                        "source_metadata": [],
-                    }
-                )
-                continue
-            
-            # For analysis, use only the added content (new changes)
-            # Format it similar to full_diff but with only new content
-            analysis_input = (
-                f"File: {c['filename']} ({c['status']}) [+{c['additions']}/-{c['deletions']}]\n"
-                f"New changes:\n{added_content}"
-            )
-            
-            if c["filename"].endswith(".sql") and "models/" in c["filename"]:
-                analysis_result = dbt_model_detection_rag(analysis_input, c["filename"], str(installation.org_id), db)  # DBT model path
-            else:
-                analysis_result = schema_detection_rag(analysis_input, str(installation.org_id))
-
-            regression_queries = fetch_queries(analysis_result.get("affected_query_ids", []))
-
-            results.append(
-                {
-                    "sql_change": full_diff,
-                    "impact_analysis": analysis_result.get("impact_report", ""),
-                    "affected_query_ids": analysis_result.get("affected_query_ids", []),
-                    "regression_queries": regression_queries,
-                    "source_metadata": analysis_result.get("source_metadata", []),
-                }
+        else:
+            analysis_result = schema_detection_rag(
+                analysis_input, str(installation.org_id)
             )
 
-        # Compose comment
-        file_summaries = []
-        for idx, r in enumerate(results, start=1):
-            file_info = code_changes[idx - 1]
-            file_summaries.append(
-                f"""
-<details>
-<summary>📂 **{file_info['filename']}** ({file_info['status']}) [+{file_info['additions']}/-{file_info['deletions']}]
-</summary>
-
-**Impact Report:**
-{r['impact_analysis']}
-
-**Affected Query IDs:** {', '.join(r['affected_query_ids']) if r['affected_query_ids'] else 'None'}
-
-</details>
-"""
-            )
-
-        comment_text = f"## 🤖 **Impact Analysis Summary**\n\nAnalyzed {len(results)} SQL file(s) for potential downstream impact.\n\n*Analysis generated at {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC*\n\n---\n\n{chr(10).join(file_summaries)}"
-
-        # Calculate total impacted queries (unique query IDs across all files)
-        all_affected_query_ids = set()
-        for r in results:
-            all_affected_query_ids.update(r.get("affected_query_ids", []))
-        total_impacted_queries = len(all_affected_query_ids)
-
-        # Store results
-        # New: store results via SQLAlchemy model with relationships
-        analysis_id = store_pr_analysis(
-            db,
-            org_id=str(installation.org_id),
-            installation_id_str=installation_id,
-            repo_full_name=repo_full_name,
-            pr_number=pr_number,
-            pr_title=pr_title,
-            pr_description=pr_body,
-            branch_name=branch_name,
-            author_name=author_name,
-            pr_url=pr_url,
-            total_impacted_queries=total_impacted_queries,
-            analysis_data={"files": results},
+        logger.info(
+            "Time: analysis for %s = %.4fs",
+            file.filename,
+            time.time() - file_start
         )
 
-        issue = repo.get_issue(number=pr_number)
-        issue.create_comment(comment_text)
+        results.append(analysis_result)
 
-        logger.info("/github/webhook - posted analysis comment to PR #%s", pr_number)
+    logger.info("Time: total analysis = %.4fs", time.time() - t0)
 
-        return {
-            "message": "PR webhook processed",
-            "pr_number": pr_number,
-            "repo": repo_full_name,
-            "installation_id": installation_id,
-            "action": action,
-            "files_analyzed": len(results),
-            "analysis_id": analysis_id,
-        }
+    # --- Step 8: Store results ---
+    t0 = time.time()
+    analysis_id = store_pr_analysis(...)
+    logger.info("Time: DB store = %.4fs", time.time() - t0)
 
-    except Exception as e:
-        logger.exception("/github/webhook - analysis failed: %s", str(e))
-        raise HTTPException(status_code=500, detail="Webhook processing failed")
+    # --- Step 9: Comment on PR ---
+    t0 = time.time()
+    issue = repo.get_issue(number=payload["pull_request"]["number"])
+    issue.create_comment("Analysis done")
+    logger.info("Time: GitHub comment = %.4fs", time.time() - t0)
+
+    # --- Total time ---
+    logger.info(
+        "TOTAL webhook processing time = %.4fs | delivery=%s",
+        time.time() - start_total,
+        delivery_id
+    )
+
+    return {"message": "done"}
 
 
 @router.post("/process-pr")
